@@ -1,17 +1,27 @@
 import User from '../models/User.model.js';
 import Product from '../models/Product.model.js';
-
-// @desc    Obtener todos los usuarios
+// @desc    Obtener todos los usuarios con conteo de productos
 // @route   GET /api/admin/users
 // @access  Private/Admin
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
 
+    // Obtener conteo de productos para cada usuario
+    const usersWithProductCount = await Promise.all(
+      users.map(async (user) => {
+        const productCount = await Product.countDocuments({ ceramist: user._id });
+        return {
+          ...user.toObject(),
+          productCount
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users
+      count: usersWithProductCount.length,
+      data: usersWithProductCount
     });
   } catch (error) {
     res.status(500).json({
