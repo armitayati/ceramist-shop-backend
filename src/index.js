@@ -24,7 +24,7 @@ connectDB();
 app.use(cors({
   origin: [
     'full-stack-final-project-rauz-6vis1ukyx.vercel.app', 
-    'http://localhost:1000' // your local dev (if you use Vite)
+    'http://localhost:1000/api' 
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
