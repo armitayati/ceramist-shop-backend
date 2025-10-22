@@ -21,8 +21,14 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Middlewares globales
-app.use(cors()); // Permitir peticiones desde cualquier origen (ajusta en producción)
-app.use(express.json()); // Parsear JSON en el body
+app.use(cors({
+  origin: [
+    'full-stack-final-project-rauz-6vis1ukyx.vercel.app', 
+    'http://localhost:1000' // your local dev (if you use Vite)
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));app.use(express.json()); // Parsear JSON en el body
 app.use(express.urlencoded({ extended: true })); // Parsear datos de formularios
 
 // Ruta de bienvenida
