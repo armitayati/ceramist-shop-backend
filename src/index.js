@@ -23,12 +23,13 @@ connectDB();
 // Middlewares globales
 app.use(cors({
   origin: [
-    'full-stack-final-project-rauz-6vis1ukyx.vercel.app', 
-    'http://localhost:1000/api' 
+    'http://localhost:5173', // local dev
+    'https://full-stack-final-project-rauz.vercel.app' // your deployed frontend
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true
-}));app.use(express.json()); // Parsear JSON en el body
+  credentials: true,
+}));
+app.use(express.json()); // Parsear JSON en el body
 app.use(express.urlencoded({ extended: true })); // Parsear datos de formularios
 
 // Ruta de bienvenida
