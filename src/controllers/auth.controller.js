@@ -70,25 +70,37 @@ export const login = async (req, res) => {
     // Buscar usuario por email
     const user = await User.findOne({ email });
 
-    // Verificar si existe y la contraseña es correcta
-    if (user && (await user.comparePassword(password))) {
-      res.status(200).json({
-        success: true,
-        data: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          token: generateToken(user._id)
-        }
-      });
-    } else {
-      res.status(401).json({
+    // Si no existe el usuario
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: 'Usuario no encontrado con ese email'
       });
     }
+
+    // Verificar contraseña
+    const isPasswordCorrect = await user.comparePassword(password);
+    
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: 'Contraseña incorrecta'
+      });
+    }
+
+    // Todo correcto - generar token
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user._id)
+      }
+    });
   } catch (error) {
+    console.error('Error en login:', error);
     res.status(500).json({
       success: false,
       message: 'Error al iniciar sesión',
