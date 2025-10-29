@@ -11,26 +11,32 @@ import { notFound } from './middlewares/notFound.middleware.js';
 // Configurar variables de entorno
 dotenv.config();
 
-// Crear aplicación Express
-const app = express();
-
-// Definir puerto
-const PORT = process.env.PORT || 5000;
-
 // Conectar a la base de datos
 connectDB();
 
+// Crear aplicación Express
+const app = express();
+
 // Middlewares globales
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://full-stack-final-project-rauz.vercel.app'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173', // local dev
-    'https://full-stack-final-project-rauz.vercel.app' // your deployed frontend
-  ],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
-app.use(express.json()); // Parsear JSON en el body
-app.use(express.urlencoded({ extended: true })); // Parsear datos de formularios
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Ruta de bienvenida
 app.get('/', (req, res) => {
@@ -40,25 +46,19 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       products: '/api/products',
-       admin: '/api/admin'
-
+      admin: '/api/admin'
     }
   });
 });
 
-// Rutas de la aplicación
+// Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Middlewares de error (deben ir al final)
-app.use(notFound); // Manejo de rutas no encontradas (404)
-app.use(errorHandler); // Manejo de errores del servidor (500)
+// Middlewares de error
+app.use(notFound);
+app.use(errorHandler);
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📡 API disponible en: http://localhost:${PORT}/api`);
 
-});
+export default app;
