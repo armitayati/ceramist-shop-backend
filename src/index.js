@@ -11,42 +11,49 @@ import { notFound } from './middlewares/notFound.middleware.js';
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
-
 // Create Express app
 const app = express();
 
-// Allowed origins for CORS
-const allowedOrigins = [
-  'http://localhost:5173', // local dev
-  'https://full-stack-final-project-rauz.vercel.app', // frontend deployed
-];
-
-// CORS middleware
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (e.g., curl, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://full-stack-final-project-rauz.vercel.app'
+    ];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
-}));
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Connect to MongoDB (after middleware setup)
+connectDB();
 
 // Welcome route
 app.get('/', (req, res) => {
   res.json({
     message: 'Ceramist Shop API',
     version: '1.0.0',
+    status: 'active',
     endpoints: {
       auth: '/api/auth',
       products: '/api/products',
@@ -64,5 +71,5 @@ app.use('/api/admin', adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Export app for Vercel serverless
+// Export for Vercel serverless
 export default app;
