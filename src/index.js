@@ -24,8 +24,16 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: '*', // Allow any origin (for testing)
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));
+
+// Optional: handle preflight requests for all routes
+app.options('*', cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
 }));
 app.options('*', cors());
 app.use(express.json());
