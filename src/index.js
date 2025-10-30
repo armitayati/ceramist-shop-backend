@@ -45,6 +45,19 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Cache static API responses for a short time
+app.use((req, res, next) => {
+  // Only cache GET requests
+  if (req.method === 'GET') {
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=120');
+    // max-age = 60 seconds for browsers
+    // s-maxage = 120 seconds for CDNs (like Vercel Edge)
+  } else {
+    // Disable caching for non-GET requests
+    res.set('Cache-Control', 'no-store');
+  }
+  next();
+});
 // Connect to MongoDB (after middleware setup)
 connectDB();
 
@@ -71,5 +84,4 @@ app.use('/api/admin', adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Export for Vercel serverless
 export default app;
