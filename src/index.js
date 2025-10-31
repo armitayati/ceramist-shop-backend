@@ -14,32 +14,54 @@ dotenv.config();
 // Create Express app
 const app = express();
 
-// CORS configuration
+// CORS configuration - MEJORADA
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://full-stack-final-project-rauz.vercel.app',
+  // Añade tu dominio de backend también (por si acaso)
+  'https://ceramist-shop-backend.vercel.app'
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://full-stack-final-project-rauz.vercel.app'
-    ];
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Permite peticiones sin origin (Postman, apps móviles, etc.)
+    // Y peticiones desde orígenes permitidos
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log('❌ Origen bloqueado por CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
+// Aplicar CORS antes que cualquier otra cosa
 app.use(cors(corsOptions));
 
-// Handle preflight requests
+// Handle preflight requests explícitamente
 app.options('*', cors(corsOptions));
+
+// Middleware adicional para asegurar headers CORS en todas las respuestas
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  
+  // Log para debugging
+  console.log(`📡 ${req.method} ${req.path} - Origin: ${origin || 'No origin'}`);
+  
+  next();
+});
 
 // Parse JSON and URL-encoded data
 app.use(express.json());
@@ -50,14 +72,13 @@ app.use((req, res, next) => {
   // Only cache GET requests
   if (req.method === 'GET') {
     res.set('Cache-Control', 'public, max-age=60, s-maxage=120');
-    // max-age = 60 seconds for browsers
-    // s-maxage = 120 seconds for CDNs (like Vercel Edge)
   } else {
     // Disable caching for non-GET requests
     res.set('Cache-Control', 'no-store');
   }
   next();
 });
+
 // Connect to MongoDB (after middleware setup)
 connectDB();
 
@@ -75,6 +96,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check route (útil para Vercel)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -83,5 +109,13 @@ app.use('/api/admin', adminRoutes);
 // 404 and error middlewares
 app.use(notFound);
 app.use(errorHandler);
+
+// Start server
+const PORT = process.env.PORT || 1000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Allowed origins:`, allowedOrigins);
+});
 
 export default app;
