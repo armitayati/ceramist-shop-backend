@@ -17,9 +17,8 @@ const app = express();
 // CORS configuration - MEJORADA
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:3000',
+  'http://localhost:1000',
   'https://full-stack-final-project-rauz.vercel.app',
-  // Añade tu dominio de backend también (por si acaso)
   'https://ceramist-shop-backend.vercel.app'
 ];
 
